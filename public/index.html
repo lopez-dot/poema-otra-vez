@@ -1,0 +1,116 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cadáver Exquisito</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="ticket">
+    <h1>CADAVER EXQUISITO</h1>
+    <div class="header-line">POETRY COLLABORATIVE SYSTEM</div>
+    
+    <div class="item-line">
+      <span>SERVICIO:</span>
+      <span>VERSO POETICO</span>
+    </div>
+    
+    <div class="item-line">
+      <span>ESTADO:</span>
+      <span>ACTIVO</span>
+    </div>
+    
+    <div class="item-line main">
+      <span>CONTINUA DESDE:</span>
+    </div>
+    
+    <div id="ultimaPalabra">Cargando última palabra...</div>
+
+    <textarea id="verso" placeholder="ESCRIBE TU VERSO AQUI..."></textarea>
+    
+    <button onclick="enviarVerso()">ENVIAR VERSO</button>
+    
+    <div class="footer">
+      GRACIAS POR PARTICIPAR
+    </div>
+  </div>
+
+  <div id="loginSection" class="acceso">
+    <p>ACCESO CREADORA</p>
+    <input type="password" id="password" placeholder="PASSWORD..." />
+    <button onclick="login()">LOGIN</button>
+  </div>
+
+  <div id="loggedInSection" class="acceso" style="display: none;">
+    <div class="total-line">SESION INICIADA</div>
+    <a href="/poema" target="_blank">VER POEMA COMPLETO</a>
+    <button onclick="logout()">LOGOUT</button>
+  </div>
+
+  <script>
+    async function cargarUltimaPalabra() {
+      const res = await fetch("/api/ultimo");
+      const data = await res.json();
+      document.getElementById("ultimaPalabra").innerText = data.ultima;
+    }
+
+    async function enviarVerso() {
+      const verso = document.getElementById("verso").value.trim();
+      if (!verso) return;
+
+      await fetch("/api/agregar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ verso }),
+      });
+
+      document.getElementById("verso").value = "";
+      cargarUltimaPalabra();
+    }
+
+    async function login() {
+      const password = document.getElementById("password").value;
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password })
+      });
+      
+      if (res.ok) {
+        checkLoginStatus();
+        document.getElementById("password").value = "";
+      } else {
+        alert("Password incorrecto");
+      }
+    }
+
+    async function logout() {
+      await fetch("/api/logout", { method: "POST" });
+      checkLoginStatus();
+    }
+
+    async function checkLoginStatus() {
+      const res = await fetch("/api/status");
+      const data = await res.json();
+      
+      if (data.isLoggedIn) {
+        document.getElementById("loginSection").style.display = "none";
+        document.getElementById("loggedInSection").style.display = "block";
+      } else {
+        document.getElementById("loginSection").style.display = "block";
+        document.getElementById("loggedInSection").style.display = "none";
+      }
+    }
+
+    document.getElementById("password").addEventListener("keypress", function(e) {
+      if (e.key === "Enter") {
+        login();
+      }
+    });
+
+    cargarUltimaPalabra();
+    checkLoginStatus();
+  </script>
+</body>
+</html>
